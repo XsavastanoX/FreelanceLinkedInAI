@@ -13,16 +13,28 @@ export default async function DashboardPage() {
     if (!user) redirect("/sign-in");
 
     // Sync user if not exists
-    let dbUser = await db.query.users.findFirst({
-        where: eq(users.id, user.id),
-    });
-
-    if (!dbUser) {
-        await db.insert(users).values({
-            id: user.id,
-            email: user.emailAddresses[0].emailAddress,
+    let dbUser;
+    try {
+        dbUser = await db.query.users.findFirst({
+            where: eq(users.id, user.id),
         });
-        dbUser = await db.query.users.findFirst({ where: eq(users.id, user.id) });
+
+        if (!dbUser) {
+            const email = user.emailAddresses[0]?.emailAddress;
+            if (email) {
+                await db.insert(users).values({
+                    id: user.id,
+                    email: email,
+                });
+                dbUser = await db.query.users.findFirst({ where: eq(users.id, user.id) });
+            } else {
+                console.error("User has no email address, skipping DB sync");
+            }
+        }
+    } catch (error) {
+        console.error("Error syncing user to DB:", error);
+        // Fallback or rethrow if critical, but for now allow UI to render with partial data
+        // We'll let dbUser be undefined, which the UI handles (e.g. "Not set", 0 credits)
     }
 
 
