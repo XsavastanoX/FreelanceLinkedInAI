@@ -10,10 +10,15 @@ export default async function HistoryPage() {
     const { userId } = await auth();
     if (!userId) redirect("/sign-in");
 
-    const userPosts = await db.query.posts.findMany({
-        where: eq(posts.userId, userId),
-        orderBy: [desc(posts.createdAt)],
-    });
+    let userPosts: any[] = [];
+    try {
+        userPosts = await db.query.posts.findMany({
+            where: eq(posts.userId, userId),
+            orderBy: [desc(posts.createdAt)],
+        });
+    } catch (error) {
+        console.error("Error fetching history:", error);
+    }
 
     return (
         <div className="space-y-6">

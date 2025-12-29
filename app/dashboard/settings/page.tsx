@@ -10,9 +10,14 @@ export default async function SettingsPage() {
     const { userId } = await auth();
     if (!userId) redirect("/sign-in");
 
-    const user = await db.query.users.findFirst({
-        where: eq(users.id, userId),
-    });
+    let user;
+    try {
+        user = await db.query.users.findFirst({
+            where: eq(users.id, userId),
+        });
+    } catch (error) {
+        console.error("Error fetching user for settings:", error);
+    }
 
     return (
         <div className="space-y-6">
